@@ -22,6 +22,7 @@ function App() {
 
   return (
     <div className='App dark:bg-gray-700'>
+      <h1>deploy pull request</h1>
       <div>
         <a href='https://vitejs.dev' target='_blank' rel='noreferrer'>
           <img src='/vite.svg' className='logo' alt='Vite logo' />
