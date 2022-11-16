@@ -4,6 +4,7 @@ import { useDarkMode } from 'usehooks-ts';
 import { useTheme } from './hook/useTheme';
 import { getListStudents } from './sevice/student';
 import clsx from 'clsx';
+import Spinner from './component/Spinner';
 const LIMIT = 10;
 
 function App() {
@@ -12,11 +13,10 @@ function App() {
   const { toggle } = useDarkMode();
   useTheme();
 
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ['students', { _page, _limit: LIMIT }],
     queryFn: () => getListStudents({ _limit: LIMIT, _page }),
   });
-  console.log(Array(9));
   return (
     <>
       <button onClick={toggle}>change mode</button>
@@ -49,6 +49,7 @@ function App() {
               </tr>
             </thead>
             <tbody>
+              {isLoading && <Spinner />}
               {data?.list.map((student, index) => (
                 <tr
                   className={clsx('border-b', 'dark:border-gray-700', {
