@@ -10,17 +10,33 @@ import { client } from '@/wallet';
 import { Buffer } from 'buffer';
 import process from 'process';
 
+import { GlobalProvider } from '@/store/context';
+import { StyledEngineProvider, ThemeProvider } from '@mui/material';
+import { theme } from './MUI';
+
 globalThis.global = window;
 globalThis.Buffer = Buffer;
 globalThis.process = process;
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
     <WagmiConfig client={client}>
       <QueryClientProvider client={queryClient}>
-        <App />
+        {/* <StyledEngineProvider injectFirst> */}
+        <ThemeProvider theme={theme}>
+          <GlobalProvider>
+            <App />
+          </GlobalProvider>
+        </ThemeProvider>
+        {/* </StyledEngineProvider> */}
         <ReactQueryDevtools initialIsOpen={false} />
       </QueryClientProvider>
     </WagmiConfig>
