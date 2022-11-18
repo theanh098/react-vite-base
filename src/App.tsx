@@ -1,27 +1,33 @@
+import React, { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useDarkMode } from 'usehooks-ts';
-import { useTheme } from './hook/useTheme';
+import { useTheme } from './hooks/useTheme';
 import { getListStudents } from './sevice/student';
 import clsx from 'clsx';
-import Spinner from './component/common/Spinner';
-import { useGlobalState } from './hook/useGlobalState';
-import { updateDialogAction } from './store/action';
-import CommonDialog from './component/common/Dialog';
+import Spinner from '@/components/common/Spinner';
+import { updateDialogAction } from '@/store/dialog.slice';
+import CommonDialog from './components/common/Dialog';
 
 import { Button } from '@mui/material';
+import { useDispatch } from './hooks/useDispatch';
+import { useSelector } from './hooks/useSelector';
+import { getDialog } from './store/context';
+import { updateSnackbarAction } from './store/snackbar.slice';
+import Snackbar from './components/common/Snackbar';
 
 const LIMIT = 10;
 
 function App() {
   const [_page, setPage] = useState(1);
 
-  const { dispatch, state } = useGlobalState();
+  const dispatch = useDispatch();
+  const { show, Component } = useSelector(getDialog);
 
   const { toggle } = useDarkMode();
   useTheme();
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error } = useQuery({
     queryKey: ['students', { _page, _limit: LIMIT }],
     queryFn: () => getListStudents({ _limit: LIMIT, _page }),
   });
@@ -50,9 +56,19 @@ function App() {
     );
   };
 
+  useEffect(() => {
+    if (isError)
+      dispatch(
+        updateSnackbarAction({
+          message: 'api error',
+          show: true,
+          messageType: 'error',
+        })
+      );
+  }, [isError]);
   return (
     <>
-      {/* <button onClick={toggle}>change mode</button>
+      <button onClick={toggle}>change mode</button>
       <button onClick={openAddDialog}>Add</button>
       {isLoading && <Spinner />}
       <div className='mt-32 grid'>
@@ -164,10 +180,11 @@ function App() {
           </ul>
         </nav>
       </div>
-      <CommonDialog show={state.dialogState.show} onClose={onClose}>
-        {state.dialogState.Component}
-      </CommonDialog> */}
-      <Button variant='contained'>Contained</Button>
+      <CommonDialog show={show} onClose={onClose}>
+        {Component}
+      </CommonDialog>
+      <Snackbar />
+      {/* <Button variant='contained'>Contained</Button> */}
     </>
   );
 }

@@ -30,13 +30,13 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
     <WagmiConfig client={client}>
       <QueryClientProvider client={queryClient}>
-        {/* <StyledEngineProvider injectFirst> */}
-        <ThemeProvider theme={theme}>
-          <GlobalProvider>
-            <App />
-          </GlobalProvider>
-        </ThemeProvider>
-        {/* </StyledEngineProvider> */}
+        <StyledEngineProvider injectFirst>
+          <ThemeProvider theme={theme}>
+            <GlobalProvider>
+              <App />
+            </GlobalProvider>
+          </ThemeProvider>
+        </StyledEngineProvider>
         <ReactQueryDevtools initialIsOpen={false} />
       </QueryClientProvider>
     </WagmiConfig>

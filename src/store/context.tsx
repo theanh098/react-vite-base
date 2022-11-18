@@ -1,29 +1,28 @@
-import { DialogState } from '@/types/dialog';
-import { SnackBarState } from '@/types/snackbar';
 import React from 'react';
 import { createContext, PropsWithChildren } from 'react';
-import { DialogUpdateAction, DialogActionTypeEnum } from '@/types/dialog';
 import {
-  ResetSnackBarAction,
-  UpdateSnackBarAction,
-  SnackBarActionTypeEnum,
-} from '@/types/snackbar';
+  DialogAction,
+  DialogState,
+  dialogInitState,
+  dialogReducer,
+} from './dialog.slice';
+import {
+  SnackBarAction,
+  SnackBarState,
+  snackbarInitState,
+  snackbarReducer,
+} from './snackbar.slice';
 
-type GlobalState = {
+export type GlobalState = {
   snackBarState: SnackBarState;
   dialogState: DialogState;
 };
 
-type Action = DialogUpdateAction | ResetSnackBarAction | UpdateSnackBarAction;
+type Action = DialogAction | SnackBarAction;
 
-export const initialState: GlobalState = {
-  dialogState: {
-    show: false,
-  },
-  snackBarState: {
-    message: '',
-    show: false,
-  },
+const initialState: GlobalState = {
+  dialogState: dialogInitState,
+  snackBarState: snackbarInitState,
 };
 
 export const GlobalContext = createContext<{
@@ -31,7 +30,7 @@ export const GlobalContext = createContext<{
   dispatch: React.Dispatch<Action>;
 }>({
   state: initialState,
-  dispatch: () => {},
+  dispatch: () => null,
 });
 
 export function GlobalProvider({ children }: PropsWithChildren) {
@@ -44,34 +43,15 @@ export function GlobalProvider({ children }: PropsWithChildren) {
   );
 }
 
-const reducer = (state: GlobalState, action: Action): GlobalState => {
-  switch (action.type) {
-    /**
-     * Dialog reducer
-     */
-    case DialogActionTypeEnum.Update:
-      return {
-        ...state,
-        dialogState: {
-          ...action.payload,
-        },
-      };
-    /**
-     * Snackbar reducer
-     */
-    case SnackBarActionTypeEnum.Update:
-      return {
-        ...state,
-        snackBarState: {
-          ...action.payload,
-        },
-      };
-    case SnackBarActionTypeEnum.Reset:
-      return {
-        ...state,
-        snackBarState: initialState.snackBarState,
-      };
-    default:
-      return state;
-  }
-};
+const reducer = (state: GlobalState, action: Action): GlobalState => ({
+  dialogState: dialogReducer(state.dialogState, action as any),
+  snackBarState: snackbarReducer(state.snackBarState, action as any),
+});
+
+/**
+ * Selectors
+ */
+
+export const getSnackbar = (state: GlobalState) => state.snackBarState;
+
+export const getDialog = (state: GlobalState) => state.dialogState;
