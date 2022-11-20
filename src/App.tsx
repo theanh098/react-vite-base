@@ -9,12 +9,12 @@ import Spinner from '@/components/common/Spinner';
 import { updateDialogAction } from '@/store/dialog.slice';
 import CommonDialog from './components/common/Dialog';
 
-import { Button } from '@mui/material';
 import { useDispatch } from './hooks/useDispatch';
 import { useSelector } from './hooks/useSelector';
 import { getDialog } from './store/context';
 import { updateSnackbarAction } from './store/snackbar.slice';
 import Snackbar from './components/common/Snackbar';
+import StudentForm from './components/form';
 
 const LIMIT = 10;
 
@@ -27,7 +27,7 @@ function App() {
   const { toggle } = useDarkMode();
   useTheme();
 
-  const { data, isLoading, isError, error } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ['students', { _page, _limit: LIMIT }],
     queryFn: () => getListStudents({ _limit: LIMIT, _page }),
   });
@@ -36,14 +36,7 @@ function App() {
     dispatch(
       updateDialogAction({
         show: true,
-        Component: (
-          <div>
-            Lorem ipsum dolor sit amet, consectetur adipisicing elit. Placeat
-            facere tempora quo enim deleniti dolorum veniam nulla quam aut
-            accusantium obcaecati ipsam odit, sit quos. Reprehenderit iusto
-            officia voluptate totam.
-          </div>
-        ),
+        Component: <StudentForm />,
       })
     );
   };
@@ -66,13 +59,17 @@ function App() {
         })
       );
   }, [isError]);
+
+  console.log(Math.ceil(Number(data?.count) / LIMIT));
   return (
     <>
       <button onClick={toggle}>change mode</button>
-      <button onClick={openAddDialog}>Add</button>
       {isLoading && <Spinner />}
       <div className='mt-32 grid'>
         <div className='relative m-auto w-[80%] overflow-x-auto shadow-md sm:rounded-lg'>
+          <button className='pb-6 underline' onClick={openAddDialog}>
+            Add
+          </button>
           <table className='w-full text-left text-sm text-gray-500 dark:text-gray-400'>
             <thead className='bg-gray-50 text-xs uppercase text-gray-700 dark:bg-gray-700 dark:text-gray-400'>
               <tr>
@@ -171,7 +168,7 @@ function App() {
             <li>
               <button
                 className='rounded-r-lg border border-gray-300 bg-white px-3 py-2 leading-tight text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white'
-                disabled={_page === Number(data?.count) / LIMIT}
+                disabled={_page === Math.ceil(Number(data?.count) / LIMIT)}
                 onClick={() => setPage(prev => prev + 1)}
               >
                 Next

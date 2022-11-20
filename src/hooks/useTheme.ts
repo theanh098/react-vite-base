@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useDarkMode } from 'usehooks-ts';
 
 export function useTheme() {
-  const { isDarkMode } = useDarkMode();
+  const { isDarkMode } = useDarkMode(true);
 
   useEffect(() => {
     if (isDarkMode) document.documentElement.classList.add('dark');

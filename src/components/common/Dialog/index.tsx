@@ -12,8 +12,8 @@ function CommonDialog({
   onClose,
 }: PropsWithChildren<DialogProp>) {
   return (
-    <Dialog open={show} onClose={onClose}>
-      {children}
+    <Dialog open={show} onClose={onClose} fullWidth maxWidth={'sm'}>
+      <div className='p-6'>{children}</div>
     </Dialog>
   );
 }
