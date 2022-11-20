@@ -1,7 +1,7 @@
 ## Một số khái niệm quan trọng
 
 - `staleTime` (default `0` ms): Thời gian data được cho là đã cũ. Khi get data xong thì sau một thời gian bạn quy định thì data nó sẽ tự cũ. **Lưu ý cái `stale` trên dev tool nó hiển thị là data của bạn `stale` và `active`**
-- `cacheTime` (default `5*60*1000` ms tức 5 phút): Thời gian data sẽ bị xóa ra khỏi bộ nhớ đệm. Có thể data đã "cũ" nhưng nó chưa bị xóa ra khỏi bộ nhớ đệm vì bạn set `staleTime < cacheTime`. Thường thì người ta sẽ set `staleTime < cacheTime`
+- `cacheTime` (default `5*60*1000` ms tức 5 phút): Thời gian tồn tại data cho đến khi bị xóa ra khỏi bộ nhớ đệm. Có thể data đã "cũ" nhưng nó chưa bị xóa ra khỏi bộ nhớ đệm vì bạn set `staleTime < cacheTime`. Thường thì `staleTime < cacheTime`
 - `inactive`: là khi data đó không còn component nào subcribe cả
 
 ```tsx
@@ -10,7 +10,7 @@ const result = useQuery({ queryKey: ['todos'], queryFn: fetchTodoList });
 
 `result` là một object chứa một vài state rất quan trọng: `status`, `fetchStatus`,...
 
-Những state về các khoảnh khắc của data
+Những state về các khoảnh khắc của data `status`
 
 - `isLoading` or `status === 'loading'` - Query chưa có data
 - `isError` or `status === 'error'` - Query xảy ra lỗi
@@ -27,11 +27,9 @@ Những state về data
 - `isPaused` or `fetchStatus === 'paused'` - Query muốn fetch API nhưng bị tạm dừng vì một lý do nào đó.
 - `fetchStatus === 'idle'` - Query không làm gì cả
 
-### Nếu thấy quá rối vì quá nhiều trạng thái, sự khác nhau giữa `status` và `fetchStatus` là như thế nào?
+### Tóm lại
 
-Chỉ cần nhớ
-
-- `status` cho thông tin `data` có hay không
+- `status` cho thông tin về `data` có hay không
 - `fetchStatus` cho thông tin về `queryFn` có đang chạy hay không
 
 ## Cơ chế caching
@@ -39,18 +37,18 @@ Chỉ cần nhớ
 Một data mà đã `stale` thì khi gọi lại query của data đó, nó sẽ fetch lại api. Nếu không `stale` thì không fetch lại api (đối với trường hợp `staleTime` giữa các lần giống nhau)
 
 > Còn đối với trường hợp `staleTime` giữa 2 lần khác nhau thì nếu data của lần query thứ 1 xuất hiện lâu hơn thời gian `staleTime` của lần query thứ 2 thì nó sẽ bị gọi lại ở lần thứ 2, dù cho có stale hay chưa.
-> Ví dụ: `useQuery({ queryKey: ['todos'], queryFn: fetchTodos, staleTime: 10*1000 })` xuất hiện 5s trước, bây giờ chúng ta gọi lại `useQuery({ queryKey: ['todos'], queryFn: fetchTodos, staleTime: 2*1000 })` thì rõ ràng cái data của lần 1 dù nó chưa được cho là stale nhưng nó xuất hiện 5s trước và lâu hơn thời gian staleTime là 2s nên nó sẽ bị gọi lại ở lần 2.
+> Ví dụ: `useQuery({ queryKey: ['todos'], queryFn: fetchTodos, staleTime: 10*1000 })` sau 5s chúng ta gọi lại `useQuery({ queryKey: ['todos'], queryFn: fetchTodos, staleTime: 2*1000 })` thì rõ ràng data của lần 1 dù nó chưa được cho là stale nhưng nó đã tồn tại được 5s lâu hơn thời gian staleTime là 2s nên nó sẽ bị gọi lại ở lần 2.
 
-Một data mà bị xóa khỏi bộ nhớ (tức là quá thời gian `cacheTime`) thì khi gọi lại query của data đó, nó sẽ fetch lại api. Nếu còn chưa bị xóa khỏi bộ nhớ nhưng đã `stale` thì nó sẽ trả về data cached và fetch api ngầm, sau khi fetch xong nó sẽ update lại data cached và trả về data mới cho bạn.
+Một data mà bị xóa khỏi bộ nhớ (tức là quá thời gian `cacheTime`) thì khi gọi lại query của data đó, nó sẽ fetch lại api. Nếu còn chưa bị xóa khỏi bộ nhớ nhưng đã `stale` thì nó sẽ trả về data cached và fetch api ngầm, sau khi fetch xong nó sẽ update lại data cached và update lại data mới.
 
-Caching là một vòng đời của:
+Caching lifecycle:
 
 - Query Instance có hoặc không cache data
-- Fetch ngầm (background fetching)
-- Các inactive query
-- Xóa cache khỏi bộ nhớ (Garbage Collection)
+- Fetch api (background fetching)
+- Quey inactive, cache time đếm ngược
+- Xóa cache
 
-Một ví dụ như thế này cho anh em dễ hiều:
+Một ví dụ cho anh em dễ hiều:
 
 Giả sử chúng ta dùng `cacheTime` mặc định là **5 phút** và `staleTime` là `0`.
 
@@ -69,7 +67,7 @@ function C() {
 - `A` component được mount
   - Vì không có query nào với `['todos']` trước đó, nó sẽ fetch data
   - Khi fetch xong, data sẽ được cache dưới key là `['todos']`
-  - hook đánh dấu data là `stale` (cũ) vì sau `0`s
+  - hook đánh dấu data là `stale` sau `0`s
 - Bây giờ thì `B` component được mount ở một nơi nào đó
   - Vì cache data `['todos']` đã có trước đó, data từ cache sẽ trả về ngay lập tức cho component `B`
   - Vì cache data `['todos']` được cho là đã `stale` nên nó sẽ fetch api tại component `B`
