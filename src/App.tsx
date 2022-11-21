@@ -1,9 +1,14 @@
 import React, { useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useDarkMode } from 'usehooks-ts';
 import { useTheme } from './hooks/useTheme';
-import { getListStudents } from './sevice/student';
+import {
+  addStudent,
+  deleteStudent,
+  getListStudents,
+  Student,
+} from './sevice/student';
 import clsx from 'clsx';
 import Spinner from '@/components/common/Spinner';
 import { updateDialogAction } from '@/store/dialog.slice';
@@ -24,19 +29,34 @@ function App() {
   const dispatch = useDispatch();
   const { show, Component } = useSelector(getDialog);
 
+  const queryClient = useQueryClient();
+
   const { toggle } = useDarkMode();
   useTheme();
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, isFetching, isError } = useQuery({
     queryKey: ['students', { _page, _limit: LIMIT }],
     queryFn: () => getListStudents({ _limit: LIMIT, _page }),
+    // staleTime: 5000,
+    keepPreviousData: true,
   });
 
-  const openAddDialog = () => {
+  const { mutate, isLoading: isDeleting } = useMutation({
+    mutationFn: (id: number) => deleteStudent(id),
+    onSuccess: () => queryClient.invalidateQueries(['students']),
+  });
+
+  const openAddDialog = (id?: number) => {
     dispatch(
       updateDialogAction({
         show: true,
-        Component: <StudentForm />,
+        Component: (
+          <StudentForm
+            id={id}
+            setPage={(id: number) => setPage(id)}
+            page={_page}
+          />
+        ),
       })
     );
   };
@@ -60,14 +80,13 @@ function App() {
       );
   }, [isError]);
 
-  console.log(Math.ceil(Number(data?.count) / LIMIT));
   return (
     <>
       <button onClick={toggle}>change mode</button>
-      {isLoading && <Spinner />}
+      {(isDeleting || isFetching) && <Spinner />}
       <div className='mt-32 grid'>
         <div className='relative m-auto w-[80%] overflow-x-auto shadow-md sm:rounded-lg'>
-          <button className='pb-6 underline' onClick={openAddDialog}>
+          <button className='pb-6 underline' onClick={() => openAddDialog()}>
             Add
           </button>
           <table className='w-full text-left text-sm text-gray-500 dark:text-gray-400'>
@@ -121,11 +140,17 @@ function App() {
                   <td className='py-4 px-6'>{student.address}</td>
 
                   <td className='py-4 px-6'>
-                    <button className='font-medium text-blue-600 hover:underline dark:text-blue-500'>
+                    <button
+                      onClick={() => openAddDialog(student.id)}
+                      className='font-medium text-blue-600 hover:underline dark:text-blue-500'
+                    >
                       Edit
                     </button>
                     <span> / </span>
-                    <button className='font-medium text-blue-600 hover:underline dark:text-blue-500'>
+                    <button
+                      onClick={() => mutate(student.id)}
+                      className='font-medium text-blue-600 hover:underline dark:text-blue-500'
+                    >
                       Delete
                     </button>
                   </td>
@@ -156,7 +181,7 @@ function App() {
                       className={clsx(
                         'border border-gray-300 bg-white px-3 py-2 leading-tight text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white',
                         {
-                          ['bg-blue-50']: _page === ++index,
+                          ['bg-blue-50 dark:!bg-gray-700']: _page === ++index,
                         }
                       )}
                       onClick={() => setPage(index)}

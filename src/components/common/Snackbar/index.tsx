@@ -14,11 +14,9 @@ function Snackbar() {
   };
 
   if (show) {
-    const keyOfMessage = new Date().getTime();
     return (
       <div className='w-full'>
         <SnackbarMui
-          key={keyOfMessage}
           anchorOrigin={
             anchorOrigin ?? { vertical: 'top', horizontal: 'center' }
           }
